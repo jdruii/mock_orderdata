@@ -1,12 +1,12 @@
-### Table of Contents
-A. Pipeline Overview
-B. Data Generator
-C. Payment, Shipping, and Delivery Processors
-D. ksqlDB Stream Processor
-E. Storing Messages to PostgreSQL via Supabase
-F. Creating Dashboard using Apache Superset via Preset
+# Table of Contents
+1. [Pipeline Overview](#pipeline-overview)
+2. [Data Generator](#data-generator)
+3. Payment, Shipping, and Delivery Processors
+4. ksqlDB Stream Processor
+5. Storing Messages to PostgreSQL via Supabase
+6. Creating Dashboard using Apache Superset via Preset
 
-### Pipeline Overview
+# Pipeline Overview
 
 ![](/images/data_pipeline.png)
 
@@ -16,18 +16,18 @@ These topics are then read by the appropriate microservice (all simulated using 
 
 Data from successfully delivered orders in the `finished_orders` topic are then consumed by ksqlDB which transforms to a form suited for a Kafka Connector which will store it in a PostgreSQL database hosted on Supabase. Order information, customer information, and item information are separated and put into their own tables. The data in the database are then read by Apache Superset (via Preset.io) for exploratory data analysis, visualisation, and dashboarding. 
 
-### Data Generator
+# Data Generator
 
-#### Essential Libraries
+## Essential Libraries
 - [Faker](https://faker.readthedocs.io/) - used for generating a majority of the fields
 - datetime - used for handling dates as well as timedeltas
 - random - used for simulating randomness and variety
 
-#### Key Components
+## Key Components
 - sku_info = a separate python file that stores costs and prices of each item
 - iso_mapping = a separate python file that stores ISO codes of each provinces as well as their categories
 
-#### Order Generation Process
+## Order Generation Process
 1. Initializing order_data.
    This is the standard form of all order_data in the pipeline. For a more detailed schema, see schema_str.
    ```
@@ -79,62 +79,43 @@ The function `generate_item_info` sets the items bought in each order, the varie
 An example of a successfully delivered order_data:
 ```
 {
-  "order_id": 1,
-  "order_date": "2021-03-14T09:52:54",
+  "order_id": 4,
+  "order_date": "2021-03-14T14:48:54",
   "customer_info": {
-    "customer_id": 35339,
-    "customer_name": "Brian Barry",
-    "company": "Global Enterprise Inc.",
-    "street_address": "6556 Unit D Jacaranda Residences Tower 1, Mushroom Road, Barangay 464",
-    "lgu": "Benguet",
-    "provincial_code": "PH-BEN",
-    "contact_number": "0924-087-4461",
-    "email": "bbarry35@gei.com.ph"
+    "customer_id": 44906,
+    "customer_name": "Danielle Gray",
+    "company": "CE Trust Inc.",
+    "street_address": "7011 Clark Building 4, Pao Street, Barangay San Jhon",
+    "lgu": "Bulacan",
+    "provincial_code": "PH-BUL",
+    "contact_number": "0906-804-5378",
+    "email": "daniellegray@cti.com.ph"
   },
   "payment_info": {
     "payment_status": true,
-    "payment_method": "Digital Wallet",
-    "payment_date": "2021-03-14T09:52:54"
+    "payment_method": "Bank Transfer",
+    "payment_date": "2021-03-16T13:49:14"
   },
   "shipping_info": {
-    "shipping_id": 3440522,
+    "shipping_id": 3949708,
     "express_shipping": false,
     "order_status": "Delivered",
-    "shipped_date": "2021-03-15T11:57:57",
-    "eta": "2021-03-23T15:14:12",
-    "finished_date": "2021-03-24T14:14:04"
+    "shipped_date": "2021-03-18T18:15:48",
+    "eta": "2021-03-26T04:31:57",
+    "finished_date": "2021-03-25T22:11:43"
   },
   "item_info": [
     {
-      "sku": 35,
-      "unit_price": 1675,
-      "quantity": 2,
-      "discount_percent": 15.0,
-      "subtotal": 2847.5
-    },
-    {
-      "sku": 18,
-      "unit_price": 175,
-      "quantity": 7,
-      "discount_percent": 0.0,
-      "subtotal": 1225.0
-    },
-    {
-      "sku": 47,
-      "unit_price": 2225,
-      "quantity": 1,
-      "discount_percent": 0.0,
-      "subtotal": 2225.0
-    },
-    {
-      "sku": 52,
-      "unit_price": 3125,
-      "quantity": 1,
-      "discount_percent": 0.0,
-      "subtotal": 3125.0
+      "sku": 8,
+      "unit_price": 200,
+      "quantity": 11,
+      "discount_percent": 5.0,
+      "subtotal": 2090.0
     }
   ],
-  "item_variety": 4,
-  "order_total": 9422.5
+  "item_variety": 1,
+  "order_total": 2090.0
 }
 ```
+
+### Payment, Shipping, and Delivery Processor
