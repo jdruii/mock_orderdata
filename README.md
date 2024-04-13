@@ -9,7 +9,6 @@
 - Creating Dashboard using Apache Superset via Preset
 
 ### Pipeline Overview
-![](https://github.com/jdruii/orderdata/blob/main/images/data_pipeline.png)
 
 This data pipeline simulates an e-commerce application composed of multiple microservices loosely coupled by Apache Kafka. All data starts with the Shopping Service — either a mobile app, a web service, or both — which gathers sales data of each orders. For this project, this microservice is simulated by our Data Generator (producer.py). Generated orders are then sorted by their order status and is sent as a message to their respective kafka topics on Confluent Cloud. 
 
