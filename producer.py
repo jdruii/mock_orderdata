@@ -11,7 +11,7 @@ import time
 from collections import Counter
 import iso_mapping
 import sku_info
-import secrets
+import hidden
 
 fake = Faker('fil_PH')
 fake_bgy = Faker('es_CO')
