@@ -1,10 +1,11 @@
 # Table of Contents
 1. [Pipeline Overview](#pipeline-overview)
 2. [Data Generator](#data-generator)
-3. Payment, Shipping, and Delivery Processors
-4. ksqlDB Stream Processor
-5. Storing Messages to PostgreSQL via Supabase
-6. Creating Dashboard using Apache Superset via Preset
+3. Kafka Producer
+4. Payment, Shipping, and Delivery Processors
+5. ksqlDB Stream Processor
+6. Storing Messages to PostgreSQL via Supabase
+7. Creating Dashboard using Apache Superset via Preset
 
 # Pipeline Overview
 
@@ -29,7 +30,7 @@ Data from successfully delivered orders in the `finished_orders` topic are then 
 
 ## Order Generation Process
 1. Initializing order_data.
-   This is the standard form of all order_data in the pipeline. For a more detailed schema, see schema_str.
+   This is the standard form of all order_data in the pipeline. For a more detailed schema, see schema_str in `producer.py`.
    ```
            order_data = {
             'order_id' : '',
@@ -76,46 +77,6 @@ The function `set_payment_and_shipping_details`  sets the payment, shipping, and
 5. Generate item_info.
 The function `generate_item_info` sets the items bought in each order, the variety of items, as well as the quantity of each items. It also applies a discount if there is an active discount as determined by the function `get_discount_event` before calculating the price of the item, as well as the total of the order.
 
-An example of a successfully delivered order_data:
-```
-{
-  "order_id": 4,
-  "order_date": "2021-03-14T14:48:54",
-  "customer_info": {
-    "customer_id": 44906,
-    "customer_name": "Danielle Gray",
-    "company": "CE Trust Inc.",
-    "street_address": "7011 Clark Building 4, Pao Street, Barangay San Jhon",
-    "lgu": "Bulacan",
-    "provincial_code": "PH-BUL",
-    "contact_number": "0906-804-5378",
-    "email": "daniellegray@cti.com.ph"
-  },
-  "payment_info": {
-    "payment_status": true,
-    "payment_method": "Bank Transfer",
-    "payment_date": "2021-03-16T13:49:14"
-  },
-  "shipping_info": {
-    "shipping_id": 3949708,
-    "express_shipping": false,
-    "order_status": "Delivered",
-    "shipped_date": "2021-03-18T18:15:48",
-    "eta": "2021-03-26T04:31:57",
-    "finished_date": "2021-03-25T22:11:43"
-  },
-  "item_info": [
-    {
-      "sku": 8,
-      "unit_price": 200,
-      "quantity": 11,
-      "discount_percent": 5.0,
-      "subtotal": 2090.0
-    }
-  ],
-  "item_variety": 1,
-  "order_total": 2090.0
-}
-```
+# Kafka Producer
 
-### Payment, Shipping, and Delivery Processor
+# Payment, Shipping, and Delivery Processor
