@@ -1,11 +1,11 @@
 # Table of Contents
 1. [Pipeline Overview](#pipeline-overview)
 2. [Data Generator](#data-generator)
-3. Kafka Producer
-4. Payment, Shipping, and Delivery Processors
-5. ksqlDB Stream Processor
-6. Storing Messages to PostgreSQL via Supabase
-7. Creating Dashboard using Apache Superset via Preset
+3. [Kafka Producer](#kafka-producer)
+4. [Simulating Microservices](#simulating-microservices)
+5. [ksqlDB Stream Processor](#ksqldb-stream-processor)
+6. [Storing to PostgreSQL](#storing-to-postgresql)
+7. [Visualization using Apache Superset](#visualization-using-apache-superset)
 
 # Pipeline Overview
 
@@ -84,4 +84,12 @@ Data from successfully delivered orders in the `finished_orders` topic are then 
 
 # Kafka Producer
 
-# Payment, Shipping, and Delivery Processor
+The `SerializingProducer` package from the confluent_kafka library is used to initialize the producers along with the `SchemaRegistryClient` as the topics needed to have a schema to be connected to ksqlDB down the line. Since there are five topics (unpaid_orders, paid_orders, shipped_orders, finished_orders, and failed_orders) in the data pipeline each has their own schema, `producer.py` needs to intialize five different serializing producers at the start of the program as well. Each producer sends a message for all the appropriate orders based on their order_status. 
+
+# Simulating Microservices
+
+The payment, shipping, and delivery processors are functionally the same. They simulate their respective microservices by "processing" each messages from the topic they consume from before producing the transformed message to the next stage in the pipeline where it will be processed by the next one until the order has finally been delivered. The `process_order` function in each of these processors uses the same logic as the ones in the `producer.py`. Each of these processors also simulates a chance that the orders fail in that stage and will produce the message for those orders to topic `failed_orders` instead.
+
+# ksqlDB Stream Processor
+
+Once the 
