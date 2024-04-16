@@ -3,27 +3,19 @@ from confluent_kafka.serialization import StringSerializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.json_schema import JSONSerializer
 from faker import Faker
+import json
 from datetime import datetime, timedelta
 import random
 import time
+from collections import Counter
 import iso_mapping
 import sku_info
-import hidden
 import schema
+import hidden
 
-fake = Faker('fil_PH')
-fake_bgy = Faker('es_CO')
+### PRODUCER CONFIG ###
 
 secrets = hidden.secrets()
-
-producer = KafkaProducer(
-    bootstrap_servers = secrets['bootstrap_servers'],
-    value_serializer = lambda v: json.dumps(v).encode('utf-8'),
-    security_protocol = 'SASL_SSL',
-    sasl_mechanism = 'PLAIN',
-    sasl_plain_username = secrets['sasl_plain_username'],
-    sasl_plain_password = secrets['sasl_plain_password'],
-)
 
 schema_registry_conf = {
     'url': secrets['url'],
@@ -52,16 +44,18 @@ producer_conf = {
 }
 
 producers = {}
+
 for status, serializer in serializers.items():
     specific_conf = producer_conf.copy()
     specific_conf['value.serializer'] = serializer
     producers[status] = SerializingProducer(specific_conf)
 
+### END OF PRODUCER CONFIG ###
+
 order_counter = 0
 min_qty = 1
-max_qty = 12
-excess_duration = 0
-total_sales, cost_of_goods, gross_profit = 0, 0, 0
+max_qty = 9
+total_sales = 0
 order_volume_adjuster = timedelta(days = 0, hours = 0, minutes = 0, seconds = 0)
 
 repeat_customers = []
@@ -70,12 +64,17 @@ max_top_customers = 25
 max_repeat_customers = 75
 
 current_date = datetime.now()
-#start_date = datetime.now() - timedelta(days = 90)
+# start_date = datetime.now() - timedelta(days = 365)
 start_date = datetime(2021, 3, 14, 9, 0, 0)
+excess_duration = 0
 start_time = time.time()
 
 future_orders = False
 chosen_event = 'sale_event_0'
+order_frequencies = Counter()
+
+fake = Faker('fil_PH')
+fake_bgy = Faker('es_CO')
 
 
 def generate_random_email_pattern(first_name: str, last_name: str, company_name: str) -> str:
@@ -103,53 +102,55 @@ def generate_order_date(start_date: datetime) -> str:
                                        seconds = random.randint(0, 59)
                                        )).strftime('%Y-%m-%dT%H:%M:%S')
 
-    normal_day = (start_date + timedelta(hours = random.randint(0, 3),
+    normal_day = (start_date + timedelta(hours = random.randint(1, 3),
                                          minutes = random.randint(19, 59),
                                          seconds = random.randint(0, 59)
                                          )).strftime('%Y-%m-%dT%H:%M:%S')
 
-    fast_day = (start_date + timedelta(hours = random.randint(0, 2), 
+    fast_day = (start_date + timedelta(hours = random.randint(0, 2),
                                        minutes = random.randint(29, 59),
                                        seconds = random.randint(0, 59)
                                        )).strftime('%Y-%m-%dT%H:%M:%S')
 
-    ### Chooses base order_date interval
-    if date_day in [14, 15]:  # mid-month sale event
+    # chooses base order_date interval
+    if date_day in [14, 15]:
         order_date = (start_date + timedelta(hours = random.randint(0, 1),
-                                             minutes = random.randint(39, 59),
+                                             minutes = random.randint(34, 59),
                                              seconds = random.randint(0, 59)
                                              )).strftime('%Y-%m-%dT%H:%M:%S')
-    elif date_month == 2 and date_day in [27, 28, 29]:  # end of month sale event for february
-        order_date = (start_date + timedelta(minutes = random.randint(29, 59),
+    elif date_month == 2 and date_day in [27, 28, 29]:
+        order_date = (start_date + timedelta(minutes = random.randint(34, 59),
                                              seconds = random.randint(0, 59)
                                              )).strftime('%Y-%m-%dT%H:%M:%S')
-    elif date_month != 2 and date_day in [29, 30, 31]:  # end of month sale event for other months
-        order_date = (start_date + timedelta(minutes = random.randint(29, 59),
+    elif date_month in [1, 3, 5, 7, 8, 10, 12] and date_day in [30, 31]:
+        order_date = (start_date + timedelta(minutes = random.randint(34, 59),
                                              seconds = random.randint(0, 59)
                                              )).strftime('%Y-%m-%dT%H:%M:%S')
-    else: 
-        order_date = random.choices([slow_day, normal_day, fast_day], weights = [0.15, 0.7, 0.15])[0]
+    elif date_month in [4, 6, 9, 11] and date_day in [29, 30]:
+        order_date = (start_date + timedelta(minutes = random.randint(34, 59),
+                                             seconds = random.randint(0, 59)
+                                             )).strftime('%Y-%m-%dT%H:%M:%S')
+    else:  # regular variable day
+        order_date = random.choices([slow_day, normal_day, fast_day], weights = [0.23, 0.63, 0.14])[0]
 
-    ### Adds a modifier to the base order_date interval
-    less_order_volume = order_volume_adjuster + timedelta(minutes = random.randint(2, 4), 
+    # adds a modifier to the base order_date interval
+    less_order_volume = order_volume_adjuster + timedelta(minutes = random.randint(2, 4),
                                                           seconds = random.randint(0, 29)
                                                           )  # greater interval between orders = less orders per day on avg
 
-    more_order_volume = order_volume_adjuster - timedelta(minutes = random.randint(2, 4),  
+    more_order_volume = order_volume_adjuster - timedelta(minutes = random.randint(2, 4),
                                                           seconds = random.randint(29, 59)
                                                           )  # lesser interval between orders = more orders per day on avg
 
-    if order_counter % 400 == 0:  # Every 400th order, modifies the order_volume_adjuster to simulate growth over time
+    if order_counter % 400 == 0:  # every 400th order, modifies the order_volume_adjuster to simulate growth over time
         order_volume_adjuster = random.choices([less_order_volume, order_volume_adjuster, more_order_volume], weights = [0.39, 0.14, 0.47])[0]
-
     order_date = (datetime.fromisoformat(order_date) + order_volume_adjuster).strftime('%Y-%m-%dT%H:%M:%S')
 
-    # if order_date of current order < order_date of prev order, then set minimum time interval instead
-    if datetime.fromisoformat(order_date) < start_date + timedelta(minutes = 8):
-        order_date = (start_date + timedelta(minutes = random.randint(4, 12),  # avg of 8.75 min of between orders
+    # if order_date of current order is within 10 mins of  order_date of prev order, then set minimum time interval instead
+    if datetime.fromisoformat(order_date) < start_date + timedelta(minutes = 10):
+        order_date = (start_date + timedelta(minutes = random.randint(6, 12),
                                              seconds = random.randint(30, 59)
                                              )).strftime('%Y-%m-%dT%H:%M:%S')
-        # order_volume_adjuster = less_order_volume
     return order_date
 
 
@@ -184,22 +185,22 @@ def get_customer_info() -> dict:
         else:
             return 'Unknown'
 
+    # simulating repeat customers
     global top_customers, repeat_customers, max_top_customers, max_repeat_customers, order_counter
 
-    # Affects repeat customer rate (lower divisor and/or higher increment leads to higher repeat customer rate)
+    # affects repeat customer rate (lower divisor and/or higher increment leads to higher repeat customer rate)
     if order_counter % 100 == 0:
         max_top_customers += 1
         max_repeat_customers += 16
 
-    # Simulate repeating customers
-    # Affects percentage of orders from repeat customers (roughly equal to the odds) by increasing the number of new customers relative to the repeat customers
-    if len(top_customers) + len(repeat_customers) >= max_top_customers + max_repeat_customers and random.random() < 0.7:
+    # affects percentage of orders from repeat customers (roughly equal to the odds) by increasing the number of new customers relative to the repeat customers
+    if len(top_customers) + len(repeat_customers) >= max_top_customers + max_repeat_customers and random.random() < 0.7: #
         if random.random() < 0.7 and top_customers:  # Affects order shares of top_customers
             return random.choice(top_customers).copy()
         elif repeat_customers:
             return random.choice(repeat_customers).copy()
     else:
-        # Generate new customer_info
+        # generate new  instead
         customer_info = {
             'customer_id': random.randint(10000, 99999),
             'customer_name': fake.name(),
@@ -224,7 +225,7 @@ def get_customer_info() -> dict:
         if random.choice([True, False]):
             customer_info['email'] = customer_info['email'] + '.ph'
 
-        # Save the new customer_info to either top_customers or repeat_customers
+        # save the new customer_info to either top_customers or repeat_customers
         if len(top_customers) < max_top_customers and random.random() < 0.35:
             top_customers.append(customer_info.copy())
         elif len(repeat_customers) < max_repeat_customers and random.random() < 0.5:
@@ -238,7 +239,7 @@ def get_customer_info() -> dict:
 def set_payment_and_shipping_details(order_data):
     order_data['shipping_info']['express_shipping'] = random.random() < 0.4
     is_express = order_data['shipping_info']['express_shipping']
-    order_data['payment_info']['payment_status'] = random.random() < 0.65 if future_orders else random.random() < 0.90  # to reduce failed_orders on past orders
+    order_data['payment_info']['payment_status'] = random.random() < 0.65 if future_orders else random.random() < 0.95  # to reduce failed_orders on past orders
 
     if order_data['payment_info']['payment_status']:
         insta_pay = order_data['order_date']
@@ -317,11 +318,11 @@ def get_discount_event(order_date_day, order_date_month):
         active_event_info = get_discount_event.active_sale_events.get(order_date_month)
         if active_event_info:
             start_day = active_event_info[1]
-            # Clear the event based on the start day and current day
+            # clear the event based on the start day and current day
             if (start_day in [14] and order_date_day > 15) or (start_day in [27] and order_date_day > 29) or (start_day in [30] and order_date_day > 31):
                 get_discount_event.active_sale_events.pop(order_date_month, None)
 
-    # Check if there's an active sale event
+    # check if there's an active sale event
     active_event_info = get_discount_event.active_sale_events.get(order_date_month)
     active_event = active_event_info[0] if active_event_info else None
 
@@ -342,11 +343,11 @@ def get_discount_event(order_date_day, order_date_month):
 
     elif active_event:
         chosen_event = active_event
-        max_qty = 18 if chosen_event[0] in ['sale_event_2', 'sale_event_3'] else 15
+        max_qty = 15 if chosen_event[0] in ['sale_event_2', 'sale_event_3'] else 12
 
     else:
         chosen_event = ('sale_event_0', sku_info.sale_event_0)
-        max_qty = 10
+        max_qty = 9
 
     clear_active_event_if_needed()
 
@@ -357,22 +358,22 @@ def generate_item_info(discount_event):
     global max_qty
 
     def add_final_variety(items_count, max_qty):
-        low_variety = items_count - random.randint(1, 3) if items_count > 3 else items_count
+        low_variety = max((items_count - random.randint(1, 3)), 1)
         normal_variety = items_count
         high_variety = items_count + random.randint(1, 2)
-        items_count_variety = random.choices([low_variety, normal_variety, high_variety], weights = [0.29, 0.56, 0.15])[0]
+        items_count_variety = random.choices([low_variety, normal_variety, high_variety], weights = [0.27, 0.56, 0.17])[0]
 
-        low_qty = max_qty - random.randint(1, 4) if max_qty > 4 else max_qty
+        low_qty = max((max_qty - random.randint(2, 5)), 1)
         normal_qty = max_qty
         high_qty = max_qty + random.randint(1, 2)
-        max_qty = random.choices([low_qty, normal_qty, high_qty], weights = [0.29, 0.56, 0.15])[0]
+        max_qty = random.choices([low_qty, normal_qty, high_qty], weights = [0.32, 0.51, 0.17])[0]
 
         return items_count_variety, max_qty
 
     item_info = []
     sku_count = set()
 
-    total, total_cost, order_profit = 0, 0, 0
+    total = 0
 
     available_item_ids = list(range(1, 56))
     random.shuffle(available_item_ids)
@@ -385,10 +386,10 @@ def generate_item_info(discount_event):
         discount = round(discount_event[item_id], 2)
         unit_price = sku_info.sku_prices[item_id]
 
-        expected_quantity = max(min_qty, max_qty * (1 - (unit_price / 1200)))
-        quantity = max(min(round(random.gauss(expected_quantity, 2)), max_qty), min_qty)
+        expected_quantity = max(min_qty, max_qty * (1 - (unit_price / 1000)))
+        quantity = max(min(round(random.gauss(expected_quantity, 1)), max_qty), min_qty)
 
-        subtotal = round(unit_price * quantity * (1 - discount), 2) if discount != '0' else round((unit_price * quantity), 2)
+        subtotal = round(unit_price * quantity * (1 - discount), 2)
         total += round(subtotal, 2)
 
         sku_count.add(item_id)
@@ -401,7 +402,8 @@ def generate_item_info(discount_event):
             'subtotal': subtotal,
         })
 
-    return item_info, sku_count, round(total, 2), round(total_cost, 2)
+    return item_info, sku_count, round(total, 2)
+
 
 def determine_kafka_topic(order_status: str, payment_status: str) -> str:
     if order_status == 'Processing':
@@ -427,8 +429,7 @@ def main():
 
         if datetime.fromisoformat(order_date) > datetime.now():
             future_orders = True
-            # order_date = current_date.strftime('%Y-%m-%dT%H:%M:%S')
-            time.sleep(2.5)
+            time.sleep(0.25)
             elapsed_time = time.time() - start_time
             if elapsed_time >= excess_duration:
                 break
@@ -468,7 +469,6 @@ def main():
         order_data['order_date'] = order_date
 
         ### CUSTOMER INFO
-
         order_data['customer_info'] = get_customer_info()
 
         customer_id = order_data['customer_info']['customer_id']
@@ -488,7 +488,7 @@ def main():
         order_date_month = datetime.fromisoformat(order_data['order_date']).month
         discount_event, discount_event_name = get_discount_event(order_date_day, order_date_month)
 
-        item_info, sku_count, total, total_cost = generate_item_info(discount_event)
+        item_info, sku_count, total = generate_item_info(discount_event)
 
         order_data['item_info'] = item_info
         order_data['item_variety'] = len(sku_count)
@@ -499,12 +499,14 @@ def main():
         if order_data['shipping_info']['order_status'] == 'Delivered':
             total_sales += order_data['order_total']
 
+
         ### END OF GENERATOR
 
         start_date = datetime.fromisoformat(order_data['order_date'])
 
         kafka_topic = determine_kafka_topic(order_data['shipping_info']['order_status'], order_data['payment_info']['payment_status'])
         order_status = order_data['shipping_info']['order_status']
+
         specific_producer = producers.get(order_status)
         if specific_producer:
             specific_producer.produce(topic = kafka_topic, key = str(order_data['order_id']), value = order_data)
@@ -513,8 +515,9 @@ def main():
         else:
             print(f"Unsupported order status: {order_status}")
 
+    for producer in producers.values():
+        producer.flush()
+
 if __name__ == '__main__':
     main()
 
-for producer in producers.values():
-    producer.flush()
