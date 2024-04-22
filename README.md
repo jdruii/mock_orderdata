@@ -94,10 +94,12 @@ Messages that have been produced to the topic finished_orders and failed_orders 
 
 # Storing to PostgreSQL
 
-![Database Schema](/images/db_schema.jpg)
+![Database Schema](/images/db_schema.png)
 
 As mentioned before, a Postgres Sink Connector is used to stream data from the spliced topics created by ksqlDB into a Postgres database. For this project, a Postgres database hosted by [Supabase](https://supabase.com) was used. Single-message transforms (SMT) must first be configured to correctly set all the datetime data to its proper format.
 
 # Visualization using Apache Superset
 
-And finally, once the data are being correctly stored in the Postgres database, visualizing the metrics of the exploratory data analysis can begin. For this, Apache Superset via [Preset.io](https://preset.io) is used to minimize the setup and maintenance required of the Superset environment. 
+And finally, once the data are being correctly stored in the Postgres database, visualizing the metrics of the exploratory data analysis can begin. For this, Apache Superset via [Preset.io](https://preset.io) is used to minimize the setup and maintenance required of the Superset environment.
+
+We split our dashboard into into six tabs, one for each important category — by revenue and profit, by order, by customer, by location, by item, and by payment and delivery.
