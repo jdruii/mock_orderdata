@@ -150,4 +150,37 @@ SELECT
 FROM 
     order_info;
 
- 
+
+-- NUMBER OF REPEAT AND ONE-TIME CUSTOMERS --
+
+WITH CustomerOrderCounts AS (
+    SELECT 
+        customer_id,
+        COUNT(DISTINCT order_id) AS order_count
+    FROM 
+        order_info
+    GROUP BY 
+        customer_id
+),
+OrderFrequency AS (
+    SELECT 
+        CASE 
+            WHEN order_count = 1 THEN 'Single-Purchase' 
+            ELSE 'Repeat' 
+        END AS order_frequency,
+        COUNT(*) AS customer_count,
+        SUM(order_count) AS order_count_total
+    FROM 
+        CustomerOrderCounts
+    GROUP BY 
+        CASE 
+            WHEN order_count = 1 THEN 'Single-Purchase' 
+            ELSE 'Repeat' 
+        END
+)
+SELECT 
+    order_frequency,
+    customer_count,
+    order_count_total
+FROM 
+    OrderFrequency;
