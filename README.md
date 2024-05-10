@@ -108,7 +108,7 @@ We split our dashboard into into six tabs, one for each important category — b
 
 2. Similarly, the Orders tab shows the order count and average value of orders for the same metrics.
 
-![Sales and Orders Tabs](/images/sales_and_orders_tab.jpg)
+![Sales and Orders Tabs](/images/sales_tab.jpg)
 
 3. The Customers tab shows the total number of customers, repeat customers, and their share of revenue. The Customers tab also gives a breakdown of the top customers by revenue, their revenue per month, and their most purchased items.
 
