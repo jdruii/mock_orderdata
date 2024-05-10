@@ -100,17 +100,23 @@ As mentioned before, a Postgres Sink Connector is used to stream data from the s
 
 # Visualization using Apache Superset
 
-And finally, once the data are being correctly stored in the Postgres database, visualizing the metrics of the exploratory data analysis can begin. For this, Apache Superset via [Preset.io](https://preset.io) is used to minimize the setup and maintenance required of the Superset environment.
+And finally, once the data are being correctly stored in the Postgres database, visualizing the metrics of the exploratory data analysis can begin. For this, Apache Superset via [Preset.io](https://preset.io) is used to minimize the setup and maintenance required of the Superset environment. The dashboard periodically updates to reflect the new entries in the database.
 
 We split our dashboard into into six tabs, one for each important category — by revenue and profit, by order, by customer, by location, by item, and by payment and delivery.
 
 1. The Profit and Revenue tab shows a daily, monthly, quarterly, and yearly time-series visualization of revenue and profit, as well as the breakdown of revenue and profit by day of month. 
 
-2. Similarly, the Orders tab shows the order count and average value of orders for the same metrics. 
+2. Similarly, the Orders tab shows the order count and average value of orders for the same metrics.
+
+![Sales and Orders Tabs](/images/sales_and_orders_tab.jpg)
 
 3. The Customers tab shows the total number of customers, repeat customers, and their share of revenue. The Customers tab also gives a breakdown of the top customers by revenue, their revenue per month, and their most purchased items.
 
+![Customers Tabs](/images/customers_tab.jpg)
+
 4. The Items tab gives insight on the most profitable items, most bought items by quantity, and most bought items by order count. Below those is the Market Basket Analysis which includes a chord diagram that shows the most bought pair of items in a single order. For a more complete view of the breakdown, there's also the heatmap of pairing frequency.
+
+![Items Tabs](/images/items_tab.jpg)
 
 5. In the Payment and Delivery tab is where information regarding average time to pay, ship, and deliver, as well as the breakdown of payment methods, express shippings, and on-time deliveries are shown.
 
