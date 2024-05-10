@@ -108,15 +108,15 @@ We split our dashboard into into six tabs, one for each important category — b
 
 2. Similarly, the Orders tab shows the order count and average value of orders for the same metrics.
 
-![Sales and Orders Tabs](/images/sales_tab.jpg)
+![Sales Tabs](/images/sales_tab.jpg)
 
 3. The Customers tab shows the total number of customers, repeat customers, and their share of revenue. The Customers tab also gives a breakdown of the top customers by revenue, their revenue per month, and their most purchased items.
 
-![Customers Tabs](/images/customers_tab.jpg)
+![Customers Tab](/images/customers_tab.jpg)
 
 4. The Items tab gives insight on the most profitable items, most bought items by quantity, and most bought items by order count. Below those is the Market Basket Analysis which includes a chord diagram that shows the most bought pair of items in a single order. For a more complete view of the breakdown, there's also the heatmap of pairing frequency.
 
-![Items Tabs](/images/items_tab.jpg)
+![Items Tab](/images/items_tab.jpg)
 
 5. In the Payment and Delivery tab is where information regarding average time to pay, ship, and deliver, as well as the breakdown of payment methods, express shippings, and on-time deliveries are shown.
 
